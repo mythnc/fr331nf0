@@ -1,4 +1,6 @@
 import configparser
+import json
+import pprint
 import requests
 
 
@@ -12,6 +14,7 @@ short_token = app_setting['short token']
 long_token = app_setting.get('long token')
 
 host = 'https://graph.facebook.com'
+version = 'v2.10'
 
 def get_long_token():
     # TODO: handle long token expired condition
@@ -26,16 +29,38 @@ def get_long_token():
     }
     r = requests.get(host + path, params=params)
     result = r.json()
-    access_token = result['access_token']
-    save_long_token(access_token)
-    return access_token
+    long_token = result['access_token']
+    save_long_token()
 
 
-def save_long_token(access_token):
+def save_long_token():
     # TODO: if long token alreday existed, this will failed
     with open(config_file, 'a') as f:
-        f.write('long token = {}'.format(access_token))
+        f.write('long token = {}'.format(long_token))
 
 
-token = get_long_token()
-print(token)
+def get_posts():
+    url = '{}/{}/me/posts'.format(host, version)
+    params = {
+        'access_token': long_token,
+        'fields': 'comments{comments,message},message,created_time,object_id,id',
+    }
+    r = requests.get(url, params=params)
+    # TODO: handle after
+    return r.json()
+
+
+def save_posts(result):
+    with open('data.json', 'w') as f:
+        json.dump(result, f)
+
+
+def read_posts():
+    with open('data.json') as f:
+        return json.load(f)
+
+
+if __name__ == '__main__':
+    #result = get_posts()
+    #save_posts(result)
+    pass
